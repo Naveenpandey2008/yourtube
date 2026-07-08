@@ -4,9 +4,11 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Menu, Search, Mic, Video, Bell, User, X,
-  ChevronLeft, Settings, HelpCircle, LogOut, PlusCircle
+  ChevronLeft, Settings, HelpCircle, LogOut, PlusCircle,
+  Sun, Moon
 } from 'lucide-react';
 import CreateChannelDialog from './CreateChannelDialog';
+import { useTheme } from './ThemeProvider';
 
 interface NavbarProps {
   onMenuClick: () => void;
@@ -14,6 +16,7 @@ interface NavbarProps {
 
 export default function Navbar({ onMenuClick }: NavbarProps) {
   const router = useRouter();
+  const { theme, toggleTheme } = useTheme();
   const [searchFocused, setSearchFocused] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -33,6 +36,8 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-50 h-14 bg-yt-bg flex items-center px-4 gap-2 border-b border-transparent">
+
+        {/* Left: Logo + Hamburger */}
         {!showMobileSearch && (
           <div className="flex items-center gap-1 flex-shrink-0">
             <button
@@ -47,13 +52,14 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
                   <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/>
                 </svg>
               </div>
-              <span className="font-bold text-lg tracking-tight text-white hidden sm:block">
+              <span className="font-bold text-lg tracking-tight text-yt-text hidden sm:block">
                 YourTube
               </span>
             </a>
           </div>
         )}
 
+        {/* Center: Search */}
         {showMobileSearch ? (
           <div className="flex items-center gap-2 flex-1">
             <button onClick={() => setShowMobileSearch(false)} className="p-2">
@@ -70,7 +76,7 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
                 className="flex-1 px-4 py-2 bg-transparent text-yt-text placeholder-yt-muted text-sm outline-none"
               />
               {searchValue && (
-                <button onClick={() => setSearchValue('')} className="px-2 text-yt-muted hover:text-white">
+                <button onClick={() => setSearchValue('')} className="px-2 text-yt-muted hover:text-yt-text">
                   <X size={16} />
                 </button>
               )}
@@ -81,6 +87,7 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
           </div>
         ) : (
           <>
+            {/* Desktop search */}
             <div className="flex-1 flex justify-center max-w-2xl mx-auto">
               <div className={`hidden sm:flex items-center border rounded-full overflow-hidden transition-all w-full max-w-xl ${
                 searchFocused ? 'border-blue-400 shadow-lg shadow-blue-900/20' : 'border-yt-border'
@@ -99,7 +106,7 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
                   className="flex-1 px-4 py-2 bg-transparent text-yt-text placeholder-yt-muted text-sm outline-none"
                 />
                 {searchValue && (
-                  <button onClick={() => setSearchValue('')} className="px-2 text-yt-muted hover:text-white flex-shrink-0">
+                  <button onClick={() => setSearchValue('')} className="px-2 text-yt-muted hover:text-yt-text flex-shrink-0">
                     <X size={16} />
                   </button>
                 )}
@@ -109,25 +116,40 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
               </div>
             </div>
 
+            {/* Right: Actions */}
             <div className="flex items-center gap-1 flex-shrink-0">
-              <button
-                className="sm:hidden p-2 rounded-full hover:bg-yt-surface transition-colors"
-                onClick={() => setShowMobileSearch(true)}
-              >
+              {/* Mobile search */}
+              <button className="sm:hidden p-2 rounded-full hover:bg-yt-surface transition-colors" onClick={() => setShowMobileSearch(true)}>
                 <Search size={20} />
               </button>
+
+              {/* Mic */}
               <button className="hidden sm:flex p-2 rounded-full hover:bg-yt-surface transition-colors">
                 <Mic size={20} />
               </button>
+
+              {/* Upload */}
               <a href="/upload" className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-yt-border hover:bg-yt-surface transition-colors text-sm font-medium">
-  <Video size={18} />
-  <span className="hidden md:block">Upload</span>
-</a>
+                <Video size={18} />
+                <span className="hidden md:block">Upload</span>
+              </a>
+
+              {/* Theme toggle */}
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-full hover:bg-yt-surface transition-colors"
+                title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              >
+                {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+              </button>
+
+              {/* Notifications */}
               <button className="relative p-2 rounded-full hover:bg-yt-surface transition-colors">
                 <Bell size={20} />
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-yt-red rounded-full" />
               </button>
 
+              {/* Avatar */}
               <div className="relative">
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
@@ -151,11 +173,19 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
                       <span className="text-yt-muted"><PlusCircle size={16} /></span>
                       Create channel
                     </button>
+                    <button
+                      className="flex items-center gap-3 w-full px-4 py-2.5 text-sm hover:bg-yt-surface2 transition-colors"
+                      onClick={() => { toggleTheme(); setShowUserMenu(false); }}
+                    >
+                      <span className="text-yt-muted">
+                        {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+                      </span>
+                      {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+                    </button>
                     {[
                       { icon: <User size={16} />, label: 'Your profile', href: '/channel' },
                       { icon: <Settings size={16} />, label: 'Settings', href: '/settings' },
                       { icon: <HelpCircle size={16} />, label: 'Help', href: '/help' },
-                      { icon: <User size={16} />, label: 'Sign in', href: '/login' },
                       { icon: <LogOut size={16} />, label: 'Sign out', href: '/' },
                     ].map(item => (
                       <a

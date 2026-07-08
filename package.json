@@ -15,8 +15,11 @@
     "lucide-react": "^0.383.0",
     "mongoose": "^9.7.2",
     "next": "^16.2.9",
+    "razorpay": "^2.9.6",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

@@ -10,6 +10,11 @@ export interface IComment extends Document {
   dislikes: number;
   parentId: string | null;
   replies: string[];
+  reported: boolean;
+  reportReason: string;
+  reportCount: number;
+  location?: string;
+  showLocation?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -25,6 +30,11 @@ const CommentSchema = new Schema<IComment>(
     dislikes: { type: Number, default: 0 },
     parentId: { type: String, default: null },
     replies: [{ type: String }],
+    reported: { type: Boolean, default: false },
+    reportReason: { type: String, default: '' },
+    reportCount: { type: Number, default: 0 },
+    location: { type: String, default: '' },
+    showLocation: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
