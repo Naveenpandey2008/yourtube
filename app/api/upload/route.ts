@@ -1,10 +1,29 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import { existsSync } from 'fs';
-import path from 'path';
-const uuidv4 = () => crypto.randomUUID();
-import connectDB from '@/lib/mongodb';
-import Video from '@/models/Video';
+import { NextRequest, NextResponse } from "next/server";
+import connectDB from "@/lib/mongodb";
+import Video from "@/models/Video";
+import cloudinary from "@/lib/cloudinary";
+import streamifier from "streamifier";
+
+function uploadToCloudinary(
+  buffer: Buffer,
+  folder: string,
+  resourceType: "image" | "video"
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder,
+        resource_type: resourceType,
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result!.secure_url);
+      }
+    );
+
+    streamifier.createReadStream(buffer).pipe(stream);
+  });
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,77 +31,89 @@ export async function POST(req: NextRequest) {
 
     const formData = await req.formData();
 
-    const title = formData.get('title') as string;
-    const description = formData.get('description') as string;
-    const category = formData.get('category') as string;
-    const channel = formData.get('channel') as string;
-    const channelId = formData.get('channelId') as string;
-    const channelAvatar = formData.get('channelAvatar') as string;
-    const tags = formData.get('tags') as string;
-    const videoUrl = formData.get('videoUrl') as string;
-    const thumbnailUrl = formData.get('thumbnailUrl') as string;
-    const videoFile = formData.get('videoFile') as File | null;
-    const thumbnailFile = formData.get('thumbnailFile') as File | null;
+    const title = formData.get("title") as string;
+    const description = formData.get("description") as string;
+    const category = formData.get("category") as string;
+    const channel = formData.get("channel") as string;
+    const channelId = formData.get("channelId") as string;
+    const channelAvatar = formData.get("channelAvatar") as string;
+    const tags = formData.get("tags") as string;
+
+    let videoUrl = formData.get("videoUrl") as string;
+    let thumbnailUrl = formData.get("thumbnailUrl") as string;
+
+    const videoFile = formData.get("videoFile") as File | null;
+    const thumbnailFile = formData.get("thumbnailFile") as File | null;
 
     if (!title || !channel) {
-      return NextResponse.json({ success: false, error: 'Title and channel are required' }, { status: 400 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Title and channel are required",
+        },
+        { status: 400 }
+      );
     }
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-    if (!existsSync(uploadsDir)) {
-      await mkdir(uploadsDir, { recursive: true });
-    }
-
-    let finalVideoUrl = videoUrl || '';
-    let finalThumbnailUrl = thumbnailUrl || '';
-    let duration = '0:00';
-
-    // Handle video file upload
+    // Upload Video
     if (videoFile && videoFile.size > 0) {
-      const videoExt = videoFile.name.split('.').pop();
-      const videoFileName = `${uuidv4()}.${videoExt}`;
-      const videoPath = path.join(uploadsDir, videoFileName);
-      const videoBuffer = Buffer.from(await videoFile.arrayBuffer());
-      await writeFile(videoPath, videoBuffer);
-      finalVideoUrl = `/uploads/${videoFileName}`;
+      const buffer = Buffer.from(await videoFile.arrayBuffer());
+
+      videoUrl = await uploadToCloudinary(
+        buffer,
+        "youtube-clone/videos",
+        "video"
+      );
     }
 
-    // Handle thumbnail file upload
+    // Upload Thumbnail
     if (thumbnailFile && thumbnailFile.size > 0) {
-      const thumbExt = thumbnailFile.name.split('.').pop();
-      const thumbFileName = `${uuidv4()}.${thumbExt}`;
-      const thumbPath = path.join(uploadsDir, thumbFileName);
-      const thumbBuffer = Buffer.from(await thumbnailFile.arrayBuffer());
-      await writeFile(thumbPath, thumbBuffer);
-      finalThumbnailUrl = `/uploads/${thumbFileName}`;
+      const buffer = Buffer.from(await thumbnailFile.arrayBuffer());
+
+      thumbnailUrl = await uploadToCloudinary(
+        buffer,
+        "youtube-clone/thumbnails",
+        "image"
+      );
     }
 
-    // Use picsum as default thumbnail if none provided
-    if (!finalThumbnailUrl) {
-      finalThumbnailUrl = `https://picsum.photos/seed/${uuidv4()}/640/360`;
+    if (!thumbnailUrl) {
+      thumbnailUrl = `https://picsum.photos/seed/${Date.now()}/640/360`;
     }
 
-    // Save to MongoDB
     const video = await Video.create({
       title,
-      description: description || '',
-      thumbnail: finalThumbnailUrl,
-      videoUrl: finalVideoUrl,
+      description: description || "",
+      thumbnail: thumbnailUrl,
+      videoUrl,
       channel,
-      channelId: channelId || 'default',
-      channelAvatar: channelAvatar || '',
-      duration,
-      tags: tags ? tags.split(',').map((t: string) => t.trim()) : [],
-      category: category || 'General',
+      channelId: channelId || "default",
+      channelAvatar: channelAvatar || "",
+      duration: "0:00",
+      tags: tags ? tags.split(",").map((t) => t.trim()) : [],
+      category: category || "General",
       verified: false,
       views: 0,
       likes: 0,
     });
 
-    return NextResponse.json({ success: true, video }, { status: 201 });
+    return NextResponse.json(
+      {
+        success: true,
+        video,
+      },
+      { status: 201 }
+    );
   } catch (error) {
-    console.error('Upload error:', error);
-    return NextResponse.json({ success: false, error: 'Upload failed' }, { status: 500 });
+    console.error("Upload error:", error);
+throw error;
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Upload failed",
+      },
+      { status: 500 }
+    );
   }
 }
