@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { ThemeProvider } from '@/components/ThemeProvider'
+import CreatorBadge from '@/components/CreatorBadge'
 
 export const metadata: Metadata = {
   title: 'YourTube – Watch, Share, Discover',
@@ -21,6 +22,7 @@ export default function RootLayout({
         <ThemeProvider>
           {children}
         </ThemeProvider>
+        <CreatorBadge />
       </body>
     </html>
   )
