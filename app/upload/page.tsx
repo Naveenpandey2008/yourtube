@@ -47,6 +47,22 @@ export default function UploadPage() {
   const videoInputRef = useRef<HTMLInputElement>(null);
   const thumbInputRef = useRef<HTMLInputElement>(null);
 
+  const getVideoDuration = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      video.onloadedmetadata = () => {
+        window.URL.revokeObjectURL(video.src);
+        const totalSeconds = Math.floor(video.duration);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        resolve(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+      };
+      video.onerror = () => resolve('0:00');
+      video.src = URL.createObjectURL(file);
+    });
+  };
+
   const handleVideoFile = (file: File) => {
     if (!file.type.startsWith('video/')) {
       setError('Please select a valid video file');
@@ -113,13 +129,24 @@ export default function UploadPage() {
     }, 200);
 
     try {
+      // Compute real duration from the video file before sending
+      let duration = '0:00';
+      if (uploadMode === 'file' && videoFile) {
+        duration = await getVideoDuration(videoFile);
+      }
+
+      // Default channel avatar (generated from channel name) since there's no avatar system yet
+      const channelAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(channel)}&background=FF0000&color=fff&bold=true`;
+
       const formData = new FormData();
       formData.append('title', title);
       formData.append('description', description);
       formData.append('category', category);
       formData.append('channel', channel);
       formData.append('channelId', 'default');
+      formData.append('channelAvatar', channelAvatar);
       formData.append('tags', tags);
+      formData.append('duration', duration);
 
       if (uploadMode === 'file' && videoFile) {
         formData.append('videoFile', videoFile);

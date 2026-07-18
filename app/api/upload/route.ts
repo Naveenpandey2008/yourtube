@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
     const channelId = formData.get("channelId") as string;
     const channelAvatar = formData.get("channelAvatar") as string;
     const tags = formData.get("tags") as string;
+    const duration = (formData.get("duration") as string) || "0:00";
 
     let videoUrl = formData.get("videoUrl") as string;
     let thumbnailUrl = formData.get("thumbnailUrl") as string;
@@ -89,7 +90,7 @@ export async function POST(req: NextRequest) {
       channel,
       channelId: channelId || "default",
       channelAvatar: channelAvatar || "",
-      duration: "0:00",
+   duration,
       tags: tags ? tags.split(",").map((t) => t.trim()) : [],
       category: category || "General",
       verified: false,
