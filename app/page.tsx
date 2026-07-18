@@ -5,6 +5,7 @@ import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
 import CategoryBar from '@/components/CategoryBar';
 import VideoGrid from '@/components/VideoGrid';
+import PlansSection from '@/components/PlansSection';
 
 export default function HomePage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -20,6 +21,9 @@ export default function HomePage() {
           <CategoryBar />
           <div className="mt-4 pb-16">
             <VideoGrid />
+          </div>
+          <div className="pb-16 border-t border-yt-border pt-10">
+            <PlansSection variant="compact" />
           </div>
         </div>
       </main>
